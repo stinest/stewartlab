@@ -12,10 +12,10 @@ import scienceplots
 plt.style.use('science')
 
 # setting files for analysis
-directory = './../sims/SU24/'
-top_name = directory + '1M_35C/3_5J-GUAC.top'
-dat_name = directory + '1M_35C/trajectory_sim.dat'
-title = 'nanostar = 3arm_4SE(-GUAC)_5Junc'
+directory = './../sims/S24/'
+top_name = directory + '0.1M_25C/3arm_4SE.top'
+dat_name = directory + '0.1M_25C/trajectory_sim.dat'
+title = 'nanostar = 3arm_4SE(-GUAC)'
 
 # reading in topology+data files into data frames
 df_top = pd.read_csv(top_name, delimiter=' ', names=range(4), header=0)
@@ -23,7 +23,7 @@ df_dat = pd.read_csv(dat_name, delimiter=' ', header=None, names=range(3), useco
 
 # VAR+FUNC DEFINITIONS
 l_se = 5            # of nucleotides in sticky ends, counting unpaired base(s)
-l_core = 5          # of unpaired bases at the core
+l_core = 2          # of unpaired bases at the core
 N_arm = 3           # of arms in nanostar
 
 N = len(df_top[0])          # of nucleotides in nanostar
@@ -146,35 +146,7 @@ def plot_histogram(data, xaxis, yaxis, counter, bins=5):
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
     filename = os.path.join(desktop_path, f'l_{counter}.png')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
-
-# function that makes histograms for average arm length    
-def make_histogram_armLength():
-    graph_counter = 1
-    
-    for i in range(N_arm):
-        if N_arm == 3:
-            calculated_lengths = [calculate_armLength(df, i) for df in df_conf]
-            df_calculated_lengths = pd.DataFrame({'lengths': calculated_lengths})
-            plot_armLength(df_calculated_lengths['lengths'], f'Arm {graph_counter} Length (SU)', 'Frequency')
-            plt.show()
-            graph_counter += 1
-        elif N_arm == 4:
-            calculated_lengths = [calculate_armLength(df, i) for df in df_conf]
-            df_calculated_lengths = pd.DataFrame({'lengths': calculated_lengths})
-            plot_armLength(df_calculated_lengths['lengths'], f'Arm {graph_counter} Length (SU)', 'Frequency')
-            plt.show()
-            graph_counter += 1   
-def plot_armLength(data, xaxis, yaxis, bins=5):
-    plt.figure(figsize=(5, 5))
-    plt.hist(data, bins=bins, color='olive', edgecolor='darkgreen', alpha=0.7, align='left')
-    plt.xlabel(xaxis)
-    plt.ylabel(yaxis)
-    
-    avg = np.mean(data)
-    sd = np.std(data)
-    plt.text(0.04, 0.96, f'$\\mu = {avg:.2f}$\n$\\sigma = {sd:.2f}$', transform=plt.gca().transAxes, fontsize=15, color='black', ha='left', va='top')
-    plt.show()
-    
+  
 # function that makes plots for bond angle across time
 def make_noise():
     graph_counter = 1      # initializes theta count for plots
@@ -193,26 +165,26 @@ def make_noise():
                 graph_counter += 1  
 def plot_noise(data, xaxis, yaxis, counter):
     plt.figure(figsize=(8, 3))
-    plt.plot(data, linestyle='-', linewidth=1, color='cadetblue')
+    plt.plot(data, linestyle='-', linewidth=1, color='firebrick', zorder=3)
     plt.xlim(0, 1000)
-    plt.ylabel(yaxis)
     plt.ylim(0, max(data) * 1.1)
-    if counter == 1:
-        plt.title(title)
-    if counter == N_arm:
-        plt.xlabel(xaxis)
+    plt.ylabel(yaxis, fontsize=12, fontweight='bold')
+    plt.title(title, fontsize=14, fontweight='bold')
+    plt.xlabel(xaxis, fontsize=12, fontweight='bold')
         
     x = np.arange(len(data))
     coeffs = np.polyfit(x, data, 1)
     line_of_best_fit = np.polyval(coeffs, x)
-    plt.plot(x, line_of_best_fit, linestyle='--', color='orange')
+    plt.plot(x, line_of_best_fit, linestyle='--', color='black', zorder=3)
+    
+    plt.tick_params(axis='both', which='major', labelsize=10)
+    plt.tick_params(axis='both', which='minor', labelsize=8)
+
+    plt.grid(True, linestyle='--', alpha=0.3, zorder=1)
     
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    #filename = os.path.join(desktop_path, f'{title}_{counter}.png')
-    filename = os.path.join(desktop_path, f'ii_{counter}.png')
+    filename = os.path.join(desktop_path, f'aa_{counter}.png')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
-    
-    #plt.show()  
 
 # function that makes heat maps for bond angle across all sims
 def make_3d():
@@ -242,7 +214,7 @@ def make_3d():
     #plot_3d(df_theta2, r'$\theta_2$', angles, save_path, 'theta_2')
     #plot_3d(df_theta3, r'$\theta_3$', angles, save_path, 'theta_3')
     
-    plot_combined_3d([df_theta1, df_theta2, df_theta3], ['r', 'g', 'b'], angles, save_path, 'combined_thetas')
+    plot_combined_3d([df_theta1, df_theta2, df_theta3], ['firebrick', 'royalblue', 'yellowgreen'], angles, save_path, 'combined_thetas')
 def plot_3d(df, zaxis, angles, save_path, prefix):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -277,7 +249,7 @@ def plot_3d(df, zaxis, angles, save_path, prefix):
     
     plt.close(fig)
 def plot_combined_3d(dfs, colors, angles, save_path, prefix):
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8,5))
     ax = fig.add_subplot(111, projection='3d')
 
     for df, color in zip(dfs, colors):
@@ -287,14 +259,18 @@ def plot_combined_3d(dfs, colors, angles, save_path, prefix):
         X, Y = np.meshgrid(np.linspace(x.min(), x.max(), 30), np.linspace(y.min(), y.max(), 30))
         Z = griddata((x, y), z, (X, Y), method='cubic')
         
-        # Plot the surface
-        ax.plot_surface(X, Y, Z, color=color, alpha=0.5, edgecolor='k', lw=0.5, rstride=1, cstride=1)
+        ax.plot_surface(X, Y, Z, color=color, alpha=0.5, edgecolor='k', lw=0.5, rstride=1, cstride=1, zorder=3)
 
-    ax.set_xlabel('temperature (C)')
-    ax.set_ylabel('salt concentration (M)')
-    ax.set_zlabel('z')
+    ax.set_xlabel('Temp (°C)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Salt Conc (M)', fontsize=12, fontweight='bold')
+    ax.set_zlabel('Bond Angle (°)', fontsize=12, fontweight='bold')
     ax.set_xticks([10, 25, 35])
     ax.set_yticks([0.1, 0.5, 1])
+    
+    ax.tick_params(axis='both', which='major', labelsize=10)
+    ax.tick_params(axis='both', which='minor', labelsize=8)
+    
+    ax.grid(True, linestyle='--', alpha=0.3, zorder=1)
     
     filename = os.path.join(save_path, f'{prefix}.png')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
@@ -305,7 +281,6 @@ def plot_combined_3d(dfs, colors, angles, save_path, prefix):
         plt.savefig(filename, bbox_inches='tight', dpi=200)
     
     plt.close(fig)
-    
     
     
 ## CODE IMPLEMENTATION
@@ -323,3 +298,5 @@ for i in range(N_conf):
 core_indices, strand_indices = find_indices(df_top)      # finds indices
 
 make_histogram()
+make_noise()
+make_3d()
