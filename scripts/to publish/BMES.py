@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d import axes3d
+from scipy.interpolate import interp1d
 from scipy.interpolate import griddata
-from scipy.stats import norm
 
 # color scheme: firebrick, royalblue, yellowgreen
 import scienceplots
@@ -13,9 +13,11 @@ plt.style.use('science')
 
 # setting files for analysis
 directory = './../sims/S24/'
-top_name = directory + '0.1M_25C/3arm_4SE.top'
-dat_name = directory + '0.1M_25C/trajectory_sim.dat'
+top_name = directory + '0.5M_35C/3arm_4SE.top'
+dat_name = directory + '0.5M_35C/trajectory_sim.dat'
 title = 'nanostar = 3arm_4SE(-GUAC)'
+experiment = 'T = 35\u00B0C'
+experiment_number = 3
 
 # reading in topology+data files into data frames
 df_top = pd.read_csv(top_name, delimiter=' ', names=range(4), header=0)
@@ -144,7 +146,7 @@ def plot_histogram(data, xaxis, yaxis, counter, bins=5):
     plt.text(0.04, 0.96, f'$\\mu = {avg:.2f}$\n$\\sigma = {sd:.2f}$', transform=plt.gca().transAxes, fontsize=15, color='black', ha='left', va='top')
     
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'l_{counter}.png')
+    filename = os.path.join(desktop_path, f'l_{counter}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
   
 # function that makes plots for bond angle across time
@@ -183,24 +185,11 @@ def plot_noise(data, xaxis, yaxis, counter):
     plt.grid(True, linestyle='--', alpha=0.3, zorder=1)
     
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'aa_{counter}.png')
+    filename = os.path.join(desktop_path, f'aa_{counter}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
 
 # function that makes heat maps for bond angle across all sims
 def make_3d():
-    data_theta1 = {
-        'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
-        'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
-        'z': [117.9, 111.04, 120.66, 112.04, 117.04, 134.43, 113.32, 118.91, 115.8] }
-    data_theta2 = {
-        'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
-        'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
-        'z': [112.92, 99.61, 97.94, 113.63, 120.12, 94.87, 116.47, 106.32, 107.29] }
-    data_theta3 = {
-        'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
-        'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
-        'z': [114.41, 132.05, 124.14, 111.79, 103.5, 114.7, 113.69, 115.6, 119.65] }
-    
     df_theta1 = pd.DataFrame(data_theta1)
     df_theta2 = pd.DataFrame(data_theta2)
     df_theta3 = pd.DataFrame(data_theta3)
@@ -239,12 +228,12 @@ def plot_3d(df, zaxis, angles, save_path, prefix):
     ax.set_yticks([0.1, 0.5, 1])
     
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'{prefix}.png')
+    filename = os.path.join(desktop_path, f'{prefix}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
     
     for angle, elevation in angles:
         ax.view_init(elevation, angle)
-        filename = os.path.join(save_path, f'{prefix}_angle_{angle}_elev_{elevation}.png')
+        filename = os.path.join(save_path, f'{prefix}_angle_{angle}_elev_{elevation}.pdf')
         plt.savefig(filename, bbox_inches='tight', dpi=200)
     
     plt.close(fig)
@@ -272,18 +261,67 @@ def plot_combined_3d(dfs, colors, angles, save_path, prefix):
     
     ax.grid(True, linestyle='--', alpha=0.3, zorder=1)
     
-    filename = os.path.join(save_path, f'{prefix}.png')
+    filename = os.path.join(save_path, f'{prefix}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
     
     for angle, elevation in angles:
         ax.view_init(elevation, angle)
-        filename = os.path.join(save_path, f'{prefix}_angle_{angle}_elev_{elevation}.png')
+        filename = os.path.join(save_path, f'{prefix}_angle_{angle}_elev_{elevation}.pdf')
         plt.savefig(filename, bbox_inches='tight', dpi=200)
     
     plt.close(fig)
+
+# function that makes line histogram for bond angle frequency, meant for overlay          
+def make_hist_trend():
+    graph_counter = 1      # initializes theta count for plots
     
+    for i in range(N_arm-1):
+        for j in range(i+1, N_arm):
+            if N_arm == 3:
+                calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
+                df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
+                plot_hist_trend(df_calculated_angles['angles'], fr'$\theta_{graph_counter}$', fr'$P(\theta_{graph_counter})$', graph_counter)
+                graph_counter += 1
+            elif N_arm == 4 and i+j != 3:
+                calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
+                df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
+                plot_hist_trend(df_calculated_angles['angles'], fr'$\theta_{graph_counter}$', fr'$P(\theta_{graph_counter})$', graph_counter)
+                graph_counter += 1   
+def plot_hist_trend(df, xaxis, yaxis, counter):
+    plt.figure(figsize=(8, 5))
+    hist_counts, bin_edges = np.histogram(df, bins=20)
+    bin_centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
+    hist_frequencies = hist_counts / len(df)
+    
+    interpolator = interp1d(bin_centers, hist_frequencies, kind='cubic', fill_value="extrapolate")      # fills in more data
+    x_dense = np.linspace(bin_edges[0], bin_edges[-1], 40)
+    y_dense = interpolator(x_dense)
+    
+    if experiment_number == 1:
+        plotstyle = 'bs-'
+    elif experiment_number == 2:
+        plotstyle = 'gD-'
+    elif experiment_number == 3:
+        plotstyle = 'mo-'
+        
+    plt.plot(x_dense, y_dense, plotstyle, markerfacecolor='none', zorder=4, label=experiment)
+
+    plt.xlabel(xaxis)
+    plt.ylabel(yaxis)
+    plt.tick_params(axis='both', which='major', labelsize=10)
+    plt.tick_params(axis='both', which='minor', labelsize=8)
+    plt.ylim(0, 0.16)
+    plt.xlim(20, 180)
+    plt.legend()
+    
+    desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+    filename = os.path.join(desktop_path, f'cc_{counter}.pdf')
+    plt.savefig(filename, bbox_inches='tight', dpi=300)
+
+
     
 ## CODE IMPLEMENTATION
+
 
 
 # partitioning the data of each configuration
@@ -297,6 +335,20 @@ for i in range(N_conf):
     
 core_indices, strand_indices = find_indices(df_top)      # finds indices
 
-make_histogram()
-make_noise()
-make_3d()
+data_theta1 = {
+    'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
+    'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
+    'z': [117.9, 111.04, 120.66, 112.04, 117.04, 134.43, 113.32, 118.91, 115.8] }
+data_theta2 = {
+    'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
+    'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
+    'z': [112.92, 99.61, 97.94, 113.63, 120.12, 94.87, 116.47, 106.32, 107.29] }
+data_theta3 = {
+    'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
+    'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
+    'z': [114.41, 132.05, 124.14, 111.79, 103.5, 114.7, 113.69, 115.6, 119.65] }
+
+#make_histogram()
+#make_noise()
+#make_3d()
+make_hist_trend()
