@@ -98,14 +98,6 @@ def calculate_angle(df, st1_index, st2_index):
     bond_angle = np.degrees(np.arccos(var))
     
     return (bond_angle)
-
-# function that calculates arm length between two indices
-def calculate_armLength(df, strand_index):
-    std_coords = df.iloc[strand_indices[strand_index], -3:]
-    COM_coords = calculate_COM(df, core_indices)
-    std_vector = std_coords - COM_coords.values[0]
-    std_array = np.array(std_vector)
-    return np.linalg.norm(std_array)
     
     
     
@@ -138,7 +130,6 @@ def plot_histogram(data, xaxis, yaxis, counter, bins=5):
     
     plt.tick_params(axis='both', which='major', labelsize=10)
     plt.tick_params(axis='both', which='minor', labelsize=8)
-
     plt.grid(True, linestyle='--', alpha=0.3, zorder=1)
     
     avg = np.mean(data)
@@ -146,7 +137,7 @@ def plot_histogram(data, xaxis, yaxis, counter, bins=5):
     plt.text(0.04, 0.96, f'$\\mu = {avg:.2f}$\n$\\sigma = {sd:.2f}$', transform=plt.gca().transAxes, fontsize=15, color='black', ha='left', va='top')
     
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'l_{counter}.pdf')
+    filename = os.path.join(desktop_path, f'histogram_{counter}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
   
 # function that makes plots for bond angle across time
@@ -170,22 +161,21 @@ def plot_noise(data, xaxis, yaxis, counter):
     plt.plot(data, linestyle='-', linewidth=1, color='firebrick', zorder=3)
     plt.xlim(0, 1000)
     plt.ylim(0, max(data) * 1.1)
+    plt.xlabel(xaxis, fontsize=12, fontweight='bold')
     plt.ylabel(yaxis, fontsize=12, fontweight='bold')
     plt.title(title, fontsize=14, fontweight='bold')
-    plt.xlabel(xaxis, fontsize=12, fontweight='bold')
+    
+    plt.tick_params(axis='both', which='major', labelsize=10)
+    plt.tick_params(axis='both', which='minor', labelsize=8)
+    plt.grid(True, linestyle='--', alpha=0.3, zorder=1)
         
     x = np.arange(len(data))
     coeffs = np.polyfit(x, data, 1)
     line_of_best_fit = np.polyval(coeffs, x)
     plt.plot(x, line_of_best_fit, linestyle='--', color='black', zorder=3)
     
-    plt.tick_params(axis='both', which='major', labelsize=10)
-    plt.tick_params(axis='both', which='minor', labelsize=8)
-
-    plt.grid(True, linestyle='--', alpha=0.3, zorder=1)
-    
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'aa_{counter}.pdf')
+    filename = os.path.join(desktop_path, f'noise_{counter}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
 
 # function that makes heat maps for bond angle across all sims
@@ -258,7 +248,6 @@ def plot_combined_3d(dfs, colors, angles, save_path, prefix):
     
     ax.tick_params(axis='both', which='major', labelsize=10)
     ax.tick_params(axis='both', which='minor', labelsize=8)
-    
     ax.grid(True, linestyle='--', alpha=0.3, zorder=1)
     
     filename = os.path.join(save_path, f'{prefix}.pdf')
@@ -315,7 +304,7 @@ def plot_hist_trend(df, xaxis, yaxis, counter):
     plt.legend()
     
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'cc_{counter}.pdf')
+    filename = os.path.join(desktop_path, f'histtrend_{counter}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=300)
 
 
@@ -351,4 +340,4 @@ data_theta3 = {
 #make_histogram()
 #make_noise()
 #make_3d()
-make_hist_trend()
+#make_hist_trend()
