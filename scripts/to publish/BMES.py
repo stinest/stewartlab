@@ -13,10 +13,10 @@ plt.style.use('science')
 
 # setting files for analysis
 directory = './../sims/S24/'
-top_name = directory + '0.5M_35C/3arm_4SE.top'
-dat_name = directory + '0.5M_35C/trajectory_sim.dat'
+top_name = directory + '1M_35C/3arm_4SE.top'
+dat_name = directory + '1M_35C/trajectory_sim.dat'
 title = 'nanostar = 3arm_4SE(-GUAC)'
-experiment = 'T = 35\u00B0C'
+experiment = 'S = 1.0M'
 experiment_number = 3
 
 # reading in topology+data files into data frames
@@ -149,33 +149,24 @@ def make_noise():
             if N_arm == 3:
                 calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
                 df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
-                plot_noise(df_calculated_angles['angles'], 'configurations', fr'$\theta_{graph_counter}$', graph_counter)
+                plot_noise(df_calculated_angles['angles'], 'Configuration', fr'$\theta_{graph_counter}$', graph_counter)
                 graph_counter += 1
             elif N_arm == 4 and i+j != 3:
                 calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
                 df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
-                plot_noise(df_calculated_angles['angles'], 'configurations', fr'$\theta_{graph_counter}$', graph_counter)
+                plot_noise(df_calculated_angles['angles'], 'Configuration', fr'$\theta_{graph_counter}$', graph_counter)
                 graph_counter += 1  
 def plot_noise(data, xaxis, yaxis, counter):
     plt.figure(figsize=(8, 3))
     plt.plot(data, linestyle='-', linewidth=1, color='firebrick', zorder=3)
     plt.xlim(0, 1000)
-    plt.ylim(0, max(data) * 1.1)
     plt.xlabel(xaxis, fontsize=12, fontweight='bold')
     plt.ylabel(yaxis, fontsize=12, fontweight='bold')
-    plt.title(title, fontsize=14, fontweight='bold')
     
     plt.tick_params(axis='both', which='major', labelsize=10)
-    plt.tick_params(axis='both', which='minor', labelsize=8)
-    plt.grid(True, linestyle='--', alpha=0.3, zorder=1)
-        
-    x = np.arange(len(data))
-    coeffs = np.polyfit(x, data, 1)
-    line_of_best_fit = np.polyval(coeffs, x)
-    plt.plot(x, line_of_best_fit, linestyle='--', color='black', zorder=3)
-    
+
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'noise_{counter}.pdf')
+    filename = os.path.join(desktop_path, f'noises_{counter}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
 
 # function that makes heat maps for bond angle across all sims
@@ -338,6 +329,6 @@ data_theta3 = {
     'z': [114.41, 132.05, 124.14, 111.79, 103.5, 114.7, 113.69, 115.6, 119.65] }
 
 #make_histogram()
-#make_noise()
+make_noise()
 #make_3d()
 #make_hist_trend()
