@@ -13,10 +13,10 @@ plt.style.use('science')
 
 # setting files for analysis
 directory = './../sims/S24/'
-top_name = directory + '1M_35C/3arm_4SE.top'
-dat_name = directory + '1M_35C/trajectory_sim.dat'
-title = 'nanostar = 3arm_4SE(-GUAC)'
-experiment = 'S = 1.0M'
+top_name = directory + '0.5M_35C/3arm_4SE.top'
+dat_name = directory + '0.5M_35C/trajectory_sim.dat'
+experiment = 'T = 35°C'
+#experiment = 'S = 1.0M'
 experiment_number = 3
 
 # reading in topology+data files into data frames
@@ -102,8 +102,42 @@ def calculate_angle(df, st1_index, st2_index):
     
     
 ## FUNCTIONS
+   
+   
     
+# creates vector visualization to confirm bond angle calculation
+def vector_visualization():
+    st1_index = 0
+    st2_index = 1
+
+    bond_angle = calculate_angle(df_conf[0], st1_index, st2_index)
+
+    st1_coords = df_conf[0].iloc[strand_indices[st1_index], -3:]
+    st2_coords = df_conf[0].iloc[strand_indices[st2_index], -3:]
+    COM_coords = calculate_COM(df_conf[0], core_indices).values[0]
     
+    st1_vector = np.array(st1_coords - COM_coords)
+    st2_vector = np.array(st2_coords - COM_coords)
+
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.quiver(*COM_coords, *st1_vector, color='r', label='Strand 1 Vector', length=np.linalg.norm(st1_vector), normalize=True)
+    ax.quiver(*COM_coords, *st2_vector, color='b', label='Strand 2 Vector', length=np.linalg.norm(st2_vector), normalize=True)
+
+    ax.scatter(*COM_coords, color='k', marker='o', label='COM')
+
+    mid_point = (st1_coords + st2_coords) / 2
+    ax.text(*mid_point, f'Bond Angle: {bond_angle:.2f}°', color='black')
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Visualization of Vectors and Bond Angle')
+
+    ax.legend()
+
+    plt.show()
     
 # function that makes histograms for each arm for frequency of bond angles
 def make_histogram():
@@ -126,7 +160,7 @@ def plot_histogram(data, xaxis, yaxis, counter, bins=5):
     plt.hist(data, bins=bins, color='royalblue', edgecolor='black', alpha=0.8, align='left', zorder=3)
     plt.xlabel(xaxis, fontsize=12, fontweight='bold')
     plt.ylabel(yaxis, fontsize=12, fontweight='bold')
-    plt.title(title, fontsize=14, fontweight='bold')
+    plt.title(top_name, fontsize=14, fontweight='bold')
     
     plt.tick_params(axis='both', which='major', labelsize=10)
     plt.tick_params(axis='both', which='minor', labelsize=8)
@@ -149,24 +183,33 @@ def make_noise():
             if N_arm == 3:
                 calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
                 df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
-                plot_noise(df_calculated_angles['angles'], 'Configuration', fr'$\theta_{graph_counter}$', graph_counter)
+                plot_noise(df_calculated_angles['angles'], 'Simulation Time (ns)', fr'$\theta_{graph_counter}$', graph_counter)
                 graph_counter += 1
             elif N_arm == 4 and i+j != 3:
                 calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
                 df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
-                plot_noise(df_calculated_angles['angles'], 'Configuration', fr'$\theta_{graph_counter}$', graph_counter)
+                plot_noise(df_calculated_angles['angles'], 'Simulation Time (ns)', fr'$\theta_{graph_counter}$', graph_counter)
                 graph_counter += 1  
 def plot_noise(data, xaxis, yaxis, counter):
+    plt.figure(figsize=(10, 3))
+    #plt.plot(data, linestyle='-', linewidth=1, color='firebrick', zorder=3)
+    
+    configurations = np.arange(len(data))
+    time_ps = configurations * 15.15  # 1 SU = 3.03ps and 5 SU's pass per configuration
+    time_ns = configurations * 0.01515  # 1 SU = 3.03ps = 0.00303ns
+
     plt.figure(figsize=(8, 3))
-    plt.plot(data, linestyle='-', linewidth=1, color='firebrick', zorder=3)
-    plt.xlim(0, 1000)
+    plt.plot(time_ns, data, linestyle='-', linewidth=1, color='firebrick', zorder=3)
+    
+    #plt.xlim(0, 1000)     # if for configurations
+    plt.xlim(0, 15)
     plt.xlabel(xaxis, fontsize=12, fontweight='bold')
     plt.ylabel(yaxis, fontsize=12, fontweight='bold')
     
     plt.tick_params(axis='both', which='major', labelsize=10)
 
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'noises_{counter}.pdf')
+    filename = os.path.join(desktop_path, f's{counter}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=200)
 
 # function that makes heat maps for bond angle across all sims
@@ -184,7 +227,8 @@ def make_3d():
     #plot_3d(df_theta2, r'$\theta_2$', angles, save_path, 'theta_2')
     #plot_3d(df_theta3, r'$\theta_3$', angles, save_path, 'theta_3')
     
-    plot_combined_3d([df_theta1, df_theta2, df_theta3], ['firebrick', 'royalblue', 'yellowgreen'], angles, save_path, 'combined_thetas')
+    legend_labels = [fr'$\theta_{{1}}$', fr'$\theta_{{2}}$', fr'$\theta_{{3}}$']
+    plot_combined_3d([df_theta1, df_theta2, df_theta3], ['Reds', 'Greens', 'Blues'], legend_labels, angles, save_path, 'combined_thetas')
 def plot_3d(df, zaxis, angles, save_path, prefix):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -218,8 +262,8 @@ def plot_3d(df, zaxis, angles, save_path, prefix):
         plt.savefig(filename, bbox_inches='tight', dpi=200)
     
     plt.close(fig)
-def plot_combined_3d(dfs, colors, angles, save_path, prefix):
-    fig = plt.figure(figsize=(8,5))
+def plot_combined_3d(dfs, colors, legend_labels, angles, save_path, prefix):
+    fig = plt.figure(figsize=(8,8))
     ax = fig.add_subplot(111, projection='3d')
 
     for df, color in zip(dfs, colors):
@@ -229,8 +273,12 @@ def plot_combined_3d(dfs, colors, angles, save_path, prefix):
         X, Y = np.meshgrid(np.linspace(x.min(), x.max(), 30), np.linspace(y.min(), y.max(), 30))
         Z = griddata((x, y), z, (X, Y), method='cubic')
         
-        ax.plot_surface(X, Y, Z, color=color, alpha=0.5, edgecolor='k', lw=0.5, rstride=1, cstride=1, zorder=3)
-
+        ax.plot_surface(X, Y, Z, cmap=color, alpha=0.5, edgecolor='k', lw=0.5, rstride=1, cstride=1, zorder=3)
+        
+    legend_handles = [plt.Line2D([0], [0], color=plt.cm.get_cmap(cmap)(0.5), lw=4, label=theta_label) 
+        for cmap, theta_label in zip(colors, legend_labels)]
+    ax.legend(handles=legend_handles, loc='upper left', fontsize=10)
+    
     ax.set_xlabel('Temp (°C)', fontsize=12, fontweight='bold')
     ax.set_ylabel('Salt Conc (M)', fontsize=12, fontweight='bold')
     ax.set_zlabel('Bond Angle (°)', fontsize=12, fontweight='bold')
@@ -249,53 +297,61 @@ def plot_combined_3d(dfs, colors, angles, save_path, prefix):
         filename = os.path.join(save_path, f'{prefix}_angle_{angle}_elev_{elevation}.pdf')
         plt.savefig(filename, bbox_inches='tight', dpi=200)
     
+    plt.show()
     plt.close(fig)
 
 # function that makes line histogram for bond angle frequency, meant for overlay          
 def make_hist_trend():
     graph_counter = 1      # initializes theta count for plots
     
-    for i in range(N_arm-1):
-        for j in range(i+1, N_arm):
-            if N_arm == 3:
-                calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
-                df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
-                plot_hist_trend(df_calculated_angles['angles'], fr'$\theta_{graph_counter}$', fr'$P(\theta_{graph_counter})$', graph_counter)
-                graph_counter += 1
-            elif N_arm == 4 and i+j != 3:
-                calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
-                df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
-                plot_hist_trend(df_calculated_angles['angles'], fr'$\theta_{graph_counter}$', fr'$P(\theta_{graph_counter})$', graph_counter)
-                graph_counter += 1   
-def plot_hist_trend(df, xaxis, yaxis, counter):
+    calculated_angles = [calculate_angle(df, 0, 1) for df in df_conf]
+    df_calculated_angles = pd.DataFrame({'angles': calculated_angles}) 
+    plot_hist_trend(df_calculated_angles['angles'], fr'$\theta_{graph_counter}$', fr'$P(\theta_{graph_counter})$')
+def plot_hist_trend(df, xaxis, yaxis):
     plt.figure(figsize=(8, 5))
-    hist_counts, bin_edges = np.histogram(df, bins=20)
+    hist_counts, bin_edges = np.histogram(df, bins=10)
     bin_centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
     hist_frequencies = hist_counts / len(df)
     
     interpolator = interp1d(bin_centers, hist_frequencies, kind='cubic', fill_value="extrapolate")      # fills in more data
-    x_dense = np.linspace(bin_edges[0], bin_edges[-1], 40)
+    x_dense = np.linspace(bin_edges[0], bin_edges[-1], 100)
     y_dense = interpolator(x_dense)
     
     if experiment_number == 1:
-        plotstyle = 'bs-'
+        colorstyle = 'c'
     elif experiment_number == 2:
-        plotstyle = 'gD-'
+        colorstyle = 'y'
     elif experiment_number == 3:
-        plotstyle = 'mo-'
+        colorstyle = 'm'
         
-    plt.plot(x_dense, y_dense, plotstyle, markerfacecolor='none', zorder=4, label=experiment)
+    plt.plot(x_dense, y_dense, color=colorstyle, zorder=4, label=experiment)
+    
+    # plots fewer markers on top of the smooth line
+    marker_interval = 4
+    x_markers = x_dense[::marker_interval]
+    y_markers = y_dense[::marker_interval]
+    
+    #cS yD mo, orchido, yD, indianredS
+    if experiment_number == 1:
+        markerstyle = 's'
+    elif experiment_number == 2:
+        markerstyle = 'D'
+    elif experiment_number == 3:
+        markerstyle = 'o'
+    
+    plt.plot(x_markers, y_markers, marker=markerstyle, color=colorstyle, markerfacecolor='none', linestyle='none', zorder=5)
+    #plt.bar(bin_centers, hist_frequencies, width=(bin_edges[1] - bin_edges[0]), alpha=0.4, color='gray', zorder=1, label='Histogram')
 
     plt.xlabel(xaxis)
     plt.ylabel(yaxis)
     plt.tick_params(axis='both', which='major', labelsize=10)
     plt.tick_params(axis='both', which='minor', labelsize=8)
-    plt.ylim(0, 0.16)
-    plt.xlim(20, 180)
+    plt.ylim(0, 0.30)
+    plt.xlim(30, 180)
     plt.legend()
     
     desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-    filename = os.path.join(desktop_path, f'histtrend_{counter}.pdf')
+    filename = os.path.join(desktop_path, f'hist2_{experiment_number}.pdf')
     plt.savefig(filename, bbox_inches='tight', dpi=300)
 
 
@@ -318,7 +374,7 @@ core_indices, strand_indices = find_indices(df_top)      # finds indices
 data_theta1 = {
     'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
     'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
-    'z': [117.9, 111.04, 120.66, 112.04, 117.04, 134.43, 113.32, 118.91, 115.8] }
+    'z': [117.9, 111.04, 120.66, 112.04, 117.04, 114.7, 113.32, 118.91, 115.8] }
 data_theta2 = {
     'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
     'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
@@ -326,9 +382,9 @@ data_theta2 = {
 data_theta3 = {
     'x': [10, 10, 10, 25, 25, 25, 35, 35, 35],
     'y': [0.1, 0.5, 1, 0.1, 0.5, 1, 0.1, 0.5, 1],
-    'z': [114.41, 132.05, 124.14, 111.79, 103.5, 114.7, 113.69, 115.6, 119.65] }
+    'z': [114.41, 132.05, 124.14, 111.79, 103.5, 134.43, 113.69, 115.6, 119.65] }
 
 #make_histogram()
-make_noise()
+#make_noise()
 #make_3d()
-#make_hist_trend()
+make_hist_trend()
