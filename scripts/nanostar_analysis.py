@@ -8,14 +8,14 @@ import numpy as np
 import os       # for master file of all sims
 
 # user-defined variables + files
-salt = 0.15
+salt = 1
 temp = 37
 N_sims = 3          # of repeated simulations
 l_se = 7            # of nucleotides in sticky ends, counting unpaired base(s)
 l_core = 2          # of unpaired bases at the core
-directory = './../sims/RNA_4m/GCUAGC/2bp/'
+directory = './../sims/DNA_3m/GCTAGC/2bp/'
 experiment = f"{salt}M_{temp}C"        # sim parameters/folder name
-top_name = f"{directory}{experiment}/4m1_6NT1_2bp.top"
+top_name = f"{directory}{experiment}/3m1_6NT1_2bp.top"
 
 # reading in topology + trajectory files into data frames
 df_top = pd.read_csv(top_name, delimiter=' ', names=range(4), header=0) 
@@ -149,8 +149,8 @@ def save_to_file():
     os.makedirs(master_dir, exist_ok=True)      # confirms directory exists
 
     df_calculated_angles["Experiment"] = experiment         # adds new column for new experiment
-    salt_file = os.path.join(master_dir, f"{N_arm}arm_{salt}M_angles.csv")         # new master files for new parameters
-    temp_file = os.path.join(master_dir, f"{N_arm}arm_{temp}C_angles.csv")
+    salt_file = os.path.join(master_dir, f"DNA_{N_arm}arm_{salt}M_angles.csv")         # new master files for new parameters
+    temp_file = os.path.join(master_dir, f"DNA_{N_arm}arm_{temp}C_angles.csv")
     
     append_to_master(salt_file, df_calculated_angles)
     append_to_master(temp_file, df_calculated_angles)

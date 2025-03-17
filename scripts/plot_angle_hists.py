@@ -14,13 +14,15 @@ plt.rc("axes", labelsize=14, labelweight="bold", labelpad=10)
 plt.rc("font", size=12, weight="light")   
 
 # desired valency + constant temperature/salt to overlay trends
-exp_condition = '0.15M'
-exp_valency = '5'
+exp_condition = '1M'
+exp_valency = '3'
+exp = '1M_37C'
 
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")         # extracts corresponding master file
 master_dir = os.path.join(desktop_path, "ucla", "stewart_lab", "nanostar_angles")
 master_file = os.path.join(master_dir, f"{exp_valency}arm_{exp_condition}_angles.csv")
 master_df = pd.read_csv(master_file)
+filtered_df = master_df[master_df["Experiment"] == exp]         # extracts rows with desired experiment
 
 angle_columns = [col for col in master_df.columns if col != "Experiment"]       # extracts column names
 colors = {'3': 'steelblue', '4': 'seagreen', '5': 'darkorange'}
@@ -35,15 +37,15 @@ height = 5
 figsize = (width_per_plot * len(angle_columns), height)     # fixed size per plot
 fig, axes = plt.subplots(1, len(angle_columns), figsize=figsize, sharey=False)
 for i, (col, theta) in enumerate(zip(angle_columns, ax_labels)):
-    data = master_df[col]
+    data = filtered_df[col]         # only using filtered data
     avg = np.mean(data)
     sd = np.std(data)
     
-    axes[i].hist(master_df[col], bins=10, color=color, edgecolor='black', alpha=0.7, density=True)
+    axes[i].hist(data, bins=10, color=color, edgecolor='black', alpha=0.7, density=True)
     
     axes[i].set_xlabel(theta+' (°)')
     axes[i].set_ylabel(fr'P({theta})')
-    axes[i].set_ylim(0, 0.018)
+    axes[i].set_ylim(0, 0.025)
     axes[i].set_xlim(0, 180)
     axes[i].set_xticks(np.arange(0, 181, 30))
     axes[i].text(0.04, 0.96, f'$\\mu = {avg:.2f}$°\n$\\sigma = {sd:.2f}$°', 
