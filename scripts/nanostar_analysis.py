@@ -3,6 +3,8 @@
 #   data frames from a given nanostar simulation and defines functions to 
 #   calculate bond angles for use in other scripts.
 
+#   Written for studying single-NS systems.
+
 import pandas as pd
 import numpy as np
 import os       # for master file of all sims

@@ -3,6 +3,8 @@
 #   plots a line representing the
 #   trajectory of a nanostar's bond angle.
 
+#   Written for studying single-NS systems.
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt

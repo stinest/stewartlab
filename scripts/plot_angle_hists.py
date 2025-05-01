@@ -3,6 +3,8 @@
 #   plots normalized histograms representing
 #   the frequency of a nanostar's bond angles.
 
+#   Written for studying single-NS systems.
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
