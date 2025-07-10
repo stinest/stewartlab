@@ -41,12 +41,7 @@ plt.ylabel('Energy (SU)')
 plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
 
 plt.axhline(avg_pe, color='crimson', linestyle='--', linewidth=0.8, label=fr'$\mu = {avg_pe:.2f}$')
-plt.legend(
-    loc='upper left',
-    bbox_to_anchor=(1.02, 1),
-    borderaxespad=0.,
-    frameon=False
-)
+plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0., frameon=False)
 
 desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
 filename = os.path.join(desktop_path, f'{valency}m{connections}_energy-{sim}.pdf')

@@ -15,7 +15,7 @@ temp = 37
 N_sims = 3          # of repeated simulations
 l_se = 7            # of nucleotides in sticky ends, counting unpaired base(s)
 l_core = 2          # of unpaired bases at the core
-directory = './../sims/DNA_3m/GCTAGC/2bp/'
+directory = '~/Documents/oxDNA/sims/RNA_3m/GCUAGC/2bp/'
 experiment = f"{salt}M_{temp}C"        # sim parameters/folder name
 top_name = f"{directory}{experiment}/3m1_6NT1_2bp.top"
 
@@ -53,29 +53,41 @@ for i in range(N_conf):
     # convert dataframe to numerical values
     df_conf[i][0] = df_conf[i][0].astype(float)
     df_conf[i][1] = df_conf[i][1].astype(float)         # returns df_conf with averaged df_dats values
-    
-        
+     
 # function that finds core/strand indices
 def find_indices(df):
     core_indice = l_arm - 1
     strand_indice = l_strand - l_se - 1
+    paired_indice = 0
     selected_core_indices = [core_indice]
     selected_strand_indices = [strand_indice]
+    paired_strand_indices = [paired_indice]
 
     for i in range(2, N_arm+1):
         for index, row in df.iterrows():
             if row[0] == i:          # enters loop at the beginning of a strand
                 core_row_candidate = index + core_indice          # creates core/strand index per strand
                 strand_row_candidate = index + strand_indice
+                paired_row_candidate = index + paired_indice
                 if core_row_candidate in df.index:
                     core_row = df.index.get_loc(core_row_candidate)          # gets actual indexed location
                     selected_core_indices.append(core_row)          # adds to list
                 if strand_row_candidate in df.index:
                     strand_row = df.index.get_loc(strand_row_candidate)
                     selected_strand_indices.append(strand_row)
+                if paired_row_candidate in df.index:
+                    paired_row = df.index.get_loc(paired_row_candidate)
+                    paired_strand_indices.append(paired_row)
                 break
+            
+    if N_arm == 5:          # reordering indices to account for different pairs in 3m, 4m, and 5m structures
+        paired_strand_indices = [paired_strand_indices[i] for i in [1, 4, 0, 2, 3]]
+    elif N_arm == 4:
+        paired_strand_indices = [paired_strand_indices[i] for i in [1, 3, 0, 2]]
+    elif N_arm == 3:
+        paired_strand_indices = [paired_strand_indices[i] for i in [2, 0, 1]]
         
-    return selected_core_indices, selected_strand_indices
+    return selected_core_indices, selected_strand_indices, paired_strand_indices
 
 # function that finds center of mass by averages of core nucleotides
 def calculate_COM(df, core_indices):
@@ -94,10 +106,16 @@ def calculate_COM(df, core_indices):
 # function that calculates the bond angle between 2 strand indices
 def calculate_angle(df, st1_index, st2_index):
     
-    # selects row of vector nucleotide, extracts columns with coords
-    st1_coords = df.iloc[strand_indices[st1_index], -3:]
-    st2_coords = df.iloc[strand_indices[st2_index], -3:]
-    
+    # average the coordinates at strand_indices[i] and paired_indices[i]
+    def average_coords(i):
+        coords1 = df.iloc[strand_indices[i], -3:]
+        coords2 = df.iloc[paired_strand_indices[i], -3:]
+        return (coords1 + coords2) / 2
+
+    # get the averaged coordinates for the two strands
+    st1_coords = average_coords(st1_index)
+    st2_coords = average_coords(st2_index)
+
     # calculates COM
     COM_coords = calculate_COM(df, core_indices)
     
@@ -118,13 +136,12 @@ def calculate_angle(df, st1_index, st2_index):
     
     return (bond_angle)
 
-core_indices, strand_indices = find_indices(df_top)      # finds indices
+core_indices, strand_indices, paired_strand_indices = find_indices(df_top)      # finds indices
 df_calculated_angles = pd.DataFrame()       # initializes an empty df to store angles
 allowed_pairs_5arm = [(0, 1), (0, 2), (1, 4), (2, 3), (3, 4)]
 custom_labels_4arm = ["14", "12", "34", "23"]       # predefined labels for 4-armed according to .top
 custom_labels_5arm = ["15", "12", "45", "23", "34"]     # predefined labels for 5-armed according to .top
 label_index = 0     # tracks custom labels
-
 for i in range(N_arm - 1):
     for j in range(i + 1, N_arm):
         if N_arm == 3:
@@ -142,7 +159,7 @@ for i in range(N_arm - 1):
                 calculated_angles = [calculate_angle(df, i, j) for df in df_conf]
                 df_calculated_angles[column_label] = calculated_angles
                 label_index += 1
-
+ 
 # call to save angle data in a master file
 def save_to_file():
     # adding experiment's bond angles to a master file
@@ -151,8 +168,8 @@ def save_to_file():
     os.makedirs(master_dir, exist_ok=True)      # confirms directory exists
 
     df_calculated_angles["Experiment"] = experiment         # adds new column for new experiment
-    salt_file = os.path.join(master_dir, f"DNA_{N_arm}arm_{salt}M_angles.csv")         # new master files for new parameters
-    temp_file = os.path.join(master_dir, f"DNA_{N_arm}arm_{temp}C_angles.csv")
+    salt_file = os.path.join(master_dir, f"{N_arm}arm_{salt}M_angles.csv")         # new master files for new parameters
+    temp_file = os.path.join(master_dir, f"{N_arm}arm_{temp}C_angles.csv")
     
     append_to_master(salt_file, df_calculated_angles)
     append_to_master(temp_file, df_calculated_angles)
@@ -178,3 +195,4 @@ def get_angles():
     return df_calculated_angles
 
 save_to_file()
+ 

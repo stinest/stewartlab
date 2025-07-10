@@ -16,13 +16,13 @@ plt.rc("axes", labelsize=14, labelweight="bold", labelpad=10)
 plt.rc("font", size=12, weight="light")   
 
 # desired valency + constant temperature/salt to overlay trends
-exp_condition = '1M'
-exp_valency = '3'
+exp_condition = '37C'
+exp_valency = '5'
 exp = '1M_37C'
 
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")         # extracts corresponding master file
 master_dir = os.path.join(desktop_path, "ucla", "stewart_lab", "nanostar_angles")
-master_file = os.path.join(master_dir, f"{exp_valency}arm_{exp_condition}_angles.csv")
+master_file = os.path.join(master_dir, f"DNA_{exp_valency}arm_{exp_condition}_angles.csv")
 master_df = pd.read_csv(master_file)
 filtered_df = master_df[master_df["Experiment"] == exp]         # extracts rows with desired experiment
 
@@ -35,7 +35,7 @@ superscript = superscripts.get(exp_valency, '')     # superscripts per structure
 ax_labels = [fr'$\theta_{{{col}}}^{{\:{superscript}}}$' for col in angle_columns]          # custom axis labels
 
 width_per_plot = 5
-height = 5
+height = 4
 figsize = (width_per_plot * len(angle_columns), height)     # fixed size per plot
 fig, axes = plt.subplots(1, len(angle_columns), figsize=figsize, sharey=False)
 for i, (col, theta) in enumerate(zip(angle_columns, ax_labels)):
@@ -45,18 +45,17 @@ for i, (col, theta) in enumerate(zip(angle_columns, ax_labels)):
     
     axes[i].hist(data, bins=10, color=color, edgecolor='black', alpha=0.7, density=True)
     
-    axes[i].set_xlabel(theta+' (°)')
-    axes[i].set_ylabel(fr'P({theta})')
+    axes[i].set_xlabel(theta+' (°)', fontsize=22, fontweight='bold')
+    axes[i].set_ylabel(fr'P({theta})', fontsize=22, fontweight='bold')
     axes[i].set_ylim(0, 0.025)
     axes[i].set_xlim(0, 180)
     axes[i].set_xticks(np.arange(0, 181, 30))
-    axes[i].text(0.04, 0.96, f'$\\mu = {avg:.2f}$°\n$\\sigma = {sd:.2f}$°', 
-        transform=axes[i].transAxes, fontsize=16, color='black', ha='left', va='top')
+    axes[i].tick_params(axis='both', labelsize=14)
+    axes[i].text(0.06, 0.94, f'$\\mu = {avg:.2f}$°\n$\\sigma = {sd:.2f}$°', 
+        transform=axes[i].transAxes, fontsize=26, color='black', ha='left', va='top', fontweight='bold')
 
-
-fig.suptitle(f"{exp_valency}-NS", fontsize=20, weight="bold")
 plt.tight_layout(rect=[0, 0, 1, 0.95])      # for layout
 
 desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')       # saves plot image to desktop
-filename = os.path.join(desktop_path, f'hists_{exp_valency}.pdf')
+filename = os.path.join(desktop_path, f'DNA-hists_{exp_valency}.pdf')
 plt.savefig(filename, bbox_inches='tight', dpi=200)

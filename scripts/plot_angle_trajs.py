@@ -17,7 +17,7 @@ plt.rc("font", size=12, weight="light")
 
 # desired valency + condition + angle to plot
 exp_condition = '0.15M'
-exp_valency = '4'
+exp_valency = '5'
 angle = '12'
 
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")         # extracts corresponding master file
@@ -27,9 +27,9 @@ master_df = pd.read_csv(master_file)
 angle_data = master_df[angle]
 
 # sim time unit = 3.06*1e-12 s
-# sim time = steps*dt = 1e7*0.0005 = 5000
-# sim time in units = 5000*3.06*1e-12 s = 15.3 ns
-total_time_ns = 15.3
+# sim time = steps*dt = 1e8*0.003 = 300000
+# sim time in units = 300000*3.06*1e-12 s = 920ns
+total_time_ns = 920
 time_ns = np.linspace(0, total_time_ns, len(angle_data))
 
 angle_columns = [col for col in master_df.columns if col != "Experiment"]       # extracts column names
@@ -43,15 +43,15 @@ y_label = fr"$\theta_{{{angle}}}^{{\:{superscript}}}$ (°)"
 average_angle = angle_data.mean()
 
 plt.figure(figsize=(10, 3))
-plt.plot(time_ns, angle_data, linestyle='-', linewidth=1.5, color=color, zorder=3, label=f"{exp_valency}-NS")
-plt.xlabel(x_label, fontsize=18, fontweight='bold')
-plt.ylabel(y_label, fontsize=18, fontweight='bold')
-plt.axhline(y=average_angle, color='gray', linestyle='--', linewidth=1, label=f"{average_angle:.2f}°")
+plt.plot(time_ns, angle_data, linestyle='-', linewidth=1.5, color=color, zorder=3)
+plt.xlabel(x_label, fontsize=19, fontweight='bold')
+plt.ylabel(y_label, fontsize=19, fontweight='bold')
+plt.axhline(y=average_angle, color='gray', linestyle='--', linewidth=0.8, label=f"{average_angle:.2f}°")
 plt.xlim(0, time_ns[-1])
 plt.yticks(np.arange(0, 181, 30))
-plt.xticks(np.arange(0, 16, 3))
+plt.xticks(np.arange(0, 1000, 100))
 plt.gca().set_autoscale_on(False)
-plt.legend(fontsize=14)
+#plt.legend(fontsize=15, loc='center left', bbox_to_anchor=(1, 0.5))
 
 desktop_path = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')       # saves plot image to desktop
 filename = os.path.join(desktop_path, f'trajs_{exp_valency}.pdf')
